@@ -8,7 +8,7 @@ var Author = require('../models/Author.js');
 bookRouter.get('/books/', function(req, res, next) {
     Book.find().populate(['author','category']).exec(function (err, books) {
         if (err) return next(err);
-        res.json(books);
+        return res.json(books);
     });
 });
 
