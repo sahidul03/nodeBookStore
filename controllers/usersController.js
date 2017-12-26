@@ -14,10 +14,15 @@ userRouter.get('/users/', function (req, res, next) {
 userRouter.post('/users/', function (req, res, next) {
     // confirm that user typed same password twice
     if (req.body.password !== req.body.passwordConf) {
-        var err = new Error('Passwords do not match.');
-        err.status = 400;
-        res.send("passwords dont match");
-        return next(err);
+        // var err = new Error('Passwords do not match.');
+        // err.status = 400;
+        // res.send("passwords dont match");
+        // return next(err);
+        var message = {
+            flag: 0,
+            message: "Passwords don't match."
+        };
+        return res.json(message)
     }
 
     if (req.body.email &&
@@ -37,25 +42,40 @@ userRouter.post('/users/', function (req, res, next) {
                 return next(error);
             } else {
                 req.session.userId = user._id;
-                return res.redirect('/profile');
+                var responseMessage = {
+                    user: user,
+                    message: 'Successfully registered.',
+                    flag: 1
+                };
+                return res.json(responseMessage);
             }
         });
 
     } else if (req.body.logemail && req.body.logpassword) {
         User.authenticate(req.body.logemail, req.body.logpassword, function (error, user) {
             if (error || !user) {
-                var err = new Error('Wrong email or password.');
-                err.status = 401;
-                return next(err);
+                // var err = new Error('Wrong email or password.');
+                // err.status = 401;
+                // return next(err);
+                var message = {
+                    flag: 0,
+                    message: "Wrong email or password."
+                };
+                return res.json(message)
             } else {
                 req.session.userId = user._id;
                 return res.redirect('/profile');
             }
         });
     } else {
-        var err = new Error('All fields required.');
-        err.status = 400;
-        return next(err);
+        // var err = new Error('All fields required.');
+        // err.status = 400;
+        // return next(err);
+        var message = {
+            flag: 0,
+            message: "All fields required."
+        };
+        return res.json(message)
     }
 });
 
@@ -72,20 +92,31 @@ userRouter.post('/login/', function (req, res, next) {
             if (error) {
                 return next(error);
             } else {
-                console.log(user);
                 if(user){
                     bcrypt.compare(req.body.password, user.password, function(err, response) {
                         if(response) {
                             // Passwords match
                             req.session.userId = user._id;
-                            return res.json('Successfully logged In.')
+                            var message = {
+                                flag: 1,
+                                message: 'Successfully logged In.'
+                            };
+                            return res.json(message)
                         } else {
                             // Passwords don't match
-                            return res.json('Incorrect password.')
+                            var message = {
+                                flag: 0,
+                                message: 'Incorrect password.'
+                            };
+                            return res.json(message)
                         }
                     });
                 }else {
-                    return res.json('Incorrect email or username.')
+                    var message = {
+                        flag: 0,
+                        message: 'Incorrect email or username.'
+                    };
+                    return res.json(message)
                 }
                 // return res.redirect('/profile');
             }
@@ -106,25 +137,28 @@ userRouter.get('/profile', function (req, res, next) {
                 return next(error);
             } else {
                 if (user === null) {
-                    var err = new Error('Not authorized! Go back!');
-                    err.status = 400;
-                    return next(err);
+                    res.status(401);
+                    res.send('Not authorized! Go back!');
                 } else {
-                    return res.send('<h1>Name: </h1>' + user.username + '<h2>Mail: </h2>' + user.email + '<br><a type="button" href="/logout">Logout</a>')
+                    return res.json(user)
                 }
             }
         });
 });
 
 // GET for logout logout
-userRouter.get('/logout', function (req, res, next) {
+userRouter.post('/logout', function (req, res, next) {
     if (req.session) {
         // delete session object
         req.session.destroy(function (err) {
             if (err) {
                 return next(err);
             } else {
-                return res.json("Logged out.");
+                var responseMessage = {
+                    message: 'Logged out.',
+                    flag: 1
+                };
+                return res.json(responseMessage);
             }
         });
     }

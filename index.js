@@ -39,7 +39,6 @@ app.use(session({
 }));
 
 function checkUserSession (req, res, next) {
-    console.log(req.url);
     if(!(req.url === '/users'
             || req.url === '/users/'
             || req.url === '/login'
@@ -53,9 +52,11 @@ function checkUserSession (req, res, next) {
                     return next(error);
                 } else {
                     if (user === null) {
-                        var err = new Error('Not authorized! Go back!');
-                        err.status = 400;
-                        return next(err);
+                        // var err = new Error('Not authorized! Go back!');
+                        // err.status = 401;
+                        // return next(err);
+                        res.status(401);
+                        res.send('Not authorized! Go back!');
                     }else {
                         next()
                     }
@@ -70,6 +71,11 @@ function checkUserSession (req, res, next) {
     // next()
 
 }
+// app.use(function(req, res, next) {
+//     res.header("Access-Control-Allow-Origin", "*");
+//     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+//     next();
+// });
 
 app.use(checkUserSession);
 
