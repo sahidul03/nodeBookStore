@@ -41,7 +41,7 @@ function checkUserSession (req, res, next) {
             || req.url === '/logout/'
         )){
         var token = req.headers['x-access-token'];
-        console.log('access-token: ', token);
+        console.log('access-token: ', req.headers);
         if (!token) return res.status(401).send({ auth: false, message: 'No token provided.' });
         jwt.verify(token, config.secret, function(err, decoded) {
             if (err) return res.status(500).send({ auth: false, message: 'Failed to authenticate token.' });
@@ -56,6 +56,15 @@ function checkUserSession (req, res, next) {
     // next()
 }
 
+function allowCORS(req, res, next) {
+    res.header('Access-Control-Allow-Origin', 'example.com');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+
+    next();
+}
+
+app.use(allowCORS);
 app.use(checkUserSession);
 
 app.use(userRouter);
