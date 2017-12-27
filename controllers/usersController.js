@@ -2,27 +2,15 @@ var express = require('express');
 var userRouter = express.Router();
 var User = require('../models/User.js');
 var bcrypt = require('bcrypt');
-
-
-// GET route for reading data
-userRouter.get('/users/', function (req, res, next) {
-    return res.sendFile(path.join(__dirname + '/templateLogReg/index.html'));
-});
+var jwt = require('jsonwebtoken');
+var config = require('../config');
 
 
 //POST route for registration
-userRouter.post('/users/', function (req, res, next) {
+userRouter.post('/registration', function (req, res, next) {
     // confirm that user typed same password twice
     if (req.body.password !== req.body.passwordConf) {
-        // var err = new Error('Passwords do not match.');
-        // err.status = 400;
-        // res.send("passwords dont match");
-        // return next(err);
-        var message = {
-            flag: 0,
-            message: "Passwords don't match."
-        };
-        return res.json(message)
+        return res.json({flag: 0, message: 'Passwords don\'t match.'});
     }
 
     if (req.body.email &&
@@ -39,48 +27,24 @@ userRouter.post('/users/', function (req, res, next) {
 
         User.create(userData, function (error, user) {
             if (error) {
-                return next(error);
+                if(error.code == 11000 && error.name == 'MongoError')
+                    return res.json({flag: 0, message: 'Already exist with this email or username.'});
             } else {
-                req.session.userId = user._id;
-                var responseMessage = {
-                    user: user,
-                    message: 'Successfully registered.',
-                    flag: 1
-                };
-                return res.json(responseMessage);
+                // create a token
+                var token = jwt.sign({id: user._id}, config.secret, {
+                    expiresIn: 86400 // expires in 24 hours
+                });
+                return res.json({flag: 1, auth: true, token: token});
             }
         });
 
-    } else if (req.body.logemail && req.body.logpassword) {
-        User.authenticate(req.body.logemail, req.body.logpassword, function (error, user) {
-            if (error || !user) {
-                // var err = new Error('Wrong email or password.');
-                // err.status = 401;
-                // return next(err);
-                var message = {
-                    flag: 0,
-                    message: "Wrong email or password."
-                };
-                return res.json(message)
-            } else {
-                req.session.userId = user._id;
-                return res.redirect('/profile');
-            }
-        });
-    } else {
-        // var err = new Error('All fields required.');
-        // err.status = 400;
-        // return next(err);
-        var message = {
-            flag: 0,
-            message: "All fields required."
-        };
-        return res.json(message)
+    }else {
+        return res.json({flag: 0, message: 'All fields required.'});
     }
 });
 
 // POST route for Login
-userRouter.post('/login/', function (req, res, next) {
+userRouter.post('/login', function (req, res, next) {
 
     if (req.body.username && req.body.password) {
         User.findOne({
@@ -92,76 +56,51 @@ userRouter.post('/login/', function (req, res, next) {
             if (error) {
                 return next(error);
             } else {
-                if(user){
-                    bcrypt.compare(req.body.password, user.password, function(err, response) {
-                        if(response) {
+                if (user) {
+                    bcrypt.compare(req.body.password, user.password, function (err, response) {
+                        if (response) {
                             // Passwords match
-                            req.session.userId = user._id;
-                            var message = {
-                                flag: 1,
-                                message: 'Successfully logged In.'
-                            };
-                            return res.json(message)
+                            var token = jwt.sign({id: user._id}, config.secret, {
+                                expiresIn: 86400 // expires in 24 hours
+                            });
+                            return res.json({flag: 1, auth: true, token: token});
                         } else {
                             // Passwords don't match
-                            var message = {
-                                flag: 0,
-                                message: 'Incorrect password.'
-                            };
-                            return res.json(message)
+                            return res.json({flag: 0, message: 'Incorrect password.'});
                         }
                     });
-                }else {
-                    var message = {
-                        flag: 0,
-                        message: 'Incorrect email or username.'
-                    };
-                    return res.json(message)
+                } else {
+                    return res.json({flag: 0, message: 'Incorrect email or username.'});
                 }
                 // return res.redirect('/profile');
             }
         });
 
     } else {
-        var err = new Error('All fields required.');
-        err.status = 400;
-        return next(err);
+        return res.json({flag: 0, message: 'All fields are required.'});
     }
 });
 
 // GET route after registering
 userRouter.get('/profile', function (req, res, next) {
-    User.findById(req.session.userId)
-        .exec(function (error, user) {
-            if (error) {
-                return next(error);
-            } else {
-                if (user === null) {
-                    res.status(401);
-                    res.send('Not authorized! Go back!');
-                } else {
-                    return res.json(user)
-                }
-            }
+    var token = req.headers['x-access-token'];
+    if (!token) return res.status(401).send({auth: false, message: 'No token provided.'});
+
+    jwt.verify(token, config.secret, function (err, decoded) {
+        if (err) return res.status(500).send({auth: false, message: 'Failed to authenticate token.'});
+
+        User.findById(decoded.id, {password: 0, passwordConf: 0}, function (err, user) {
+            if (err) return res.status(500).send("There was a problem finding the user.");
+            if (!user) return res.status(404).send("No user found.");
+
+            return res.json(user);
         });
+    });
 });
 
 // GET for logout logout
 userRouter.post('/logout', function (req, res, next) {
-    if (req.session) {
-        // delete session object
-        req.session.destroy(function (err) {
-            if (err) {
-                return next(err);
-            } else {
-                var responseMessage = {
-                    message: 'Logged out.',
-                    flag: 1
-                };
-                return res.json(responseMessage);
-            }
-        });
-    }
+    return res.json({flag: 1, auth: false, token: null });
 });
 
 module.exports = userRouter;

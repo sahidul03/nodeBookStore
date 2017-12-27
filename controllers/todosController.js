@@ -20,6 +20,7 @@ todoRouter.get('/todos/:id', function(req, res, next) {
 
 /* SAVE TODO */
 todoRouter.post('/todos/', function(req, res, next) {
+    console.log(req.body);
     Todo.create(req.body, function (err, todo) {
         if (err) return next(err);
         res.json(todo);

@@ -4,6 +4,8 @@ var app = express();
 var router = express.Router();
 var mongoose = require('mongoose');
 var User = require('./models/User');
+var config = require('./config');
+var jwt = require('jsonwebtoken');
 var bookRouter = require('./controllers/booksController');
 var authorRouter = require('./controllers/authorsController');
 var bookCategoryRouter = require('./controllers/bookCategoriesController');
@@ -29,53 +31,30 @@ mongoose.connect('mongodb://localhost/bookStore')
         console.error(err);
     });
 
-
-//use sessions for tracking logins
-//use sessions for tracking logins
-app.use(session({
-    secret: 'work hard',
-    resave: true,
-    saveUninitialized: false
-}));
-
 function checkUserSession (req, res, next) {
     if(!(req.url === '/users'
-            || req.url === '/users/'
+            || req.url === '/registration/'
+            || req.url === '/registration'
             || req.url === '/login'
             || req.url === '/login/'
             || req.url === '/logout'
             || req.url === '/logout/'
         )){
-        User.findById(req.session.userId)
-            .exec(function (error, user) {
-                if (error) {
-                    return next(error);
-                } else {
-                    if (user === null) {
-                        // var err = new Error('Not authorized! Go back!');
-                        // err.status = 401;
-                        // return next(err);
-                        res.status(401);
-                        res.send('Not authorized! Go back!');
-                    }else {
-                        next()
-                    }
-                }
-            });
+        var token = req.headers['x-access-token'];
+        console.log('access-token: ', token);
+        if (!token) return res.status(401).send({ auth: false, message: 'No token provided.' });
+        jwt.verify(token, config.secret, function(err, decoded) {
+            if (err) return res.status(500).send({ auth: false, message: 'Failed to authenticate token.' });
+            // res.status(200).send(decoded);
+            next()
+        });
     }
     else {
         next()
     }
-
     // keep executing the router middleware
     // next()
-
 }
-// app.use(function(req, res, next) {
-//     res.header("Access-Control-Allow-Origin", "*");
-//     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-//     next();
-// });
 
 app.use(checkUserSession);
 
@@ -85,9 +64,6 @@ app.use(authorRouter);
 app.use(bookCategoryRouter);
 app.use(todoRouter);
 app.use(router);
-
-// module.exports = router;
-
 
 //  http://localhost:5000/
 app.listen(5000);
