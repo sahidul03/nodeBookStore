@@ -98,6 +98,18 @@ userRouter.get('/profile', function (req, res, next) {
     });
 });
 
+
+// GET route for logging status
+userRouter.get('/logging-status', function (req, res, next) {
+    var token = req.headers['x-access-token'];
+    if (!token) return res.status(200).send({flag: 0, auth: false, message: 'No token provided.'});
+
+    jwt.verify(token, config.secret, function (err, decoded) {
+        if (err) return res.status(200).send({flag: 0, auth: false, message: 'Failed to authenticate token.'});
+        return res.status(200).send({flag: 1, auth: true, message: 'Already logged In.'});
+    });
+});
+
 // GET for logout logout
 userRouter.post('/logout', function (req, res, next) {
     return res.json({flag: 1, auth: false, token: null });
