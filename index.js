@@ -7,6 +7,9 @@ var User = require('./models/User');
 var config = require('./config');
 var jwt = require('jsonwebtoken');
 var bookRouter = require('./controllers/booksController');
+var projectRouter = require('./controllers/projectsController');
+var taskRouter = require('./controllers/tasksController');
+var commentRouter = require('./controllers/commentsController');
 var authorRouter = require('./controllers/authorsController');
 var bookCategoryRouter = require('./controllers/bookCategoriesController');
 var todoRouter = require('./controllers/todosController');
@@ -47,6 +50,11 @@ function checkUserSession (req, res, next) {
         jwt.verify(token, config.secret, function(err, decoded) {
             if (err) return res.status(401).send({ auth: false, message: 'Failed to authenticate token.' });
             // res.status(200).send(decoded);
+            User.findById(decoded.id, {password: 0, passwordConf: 0}, function (err, user) {
+                if (err) return res.status(401).send("There was a problem finding the user.");
+                if (!user) return res.status(401).send("No user found.");
+            });
+            req.headers.user_id = decoded.id;
             next()
         });
     }
@@ -61,6 +69,9 @@ app.use(cors());
 app.use(checkUserSession);
 
 app.use(userRouter);
+app.use(projectRouter);
+app.use(taskRouter);
+app.use(commentRouter);
 app.use(bookRouter);
 app.use(authorRouter);
 app.use(bookCategoryRouter);

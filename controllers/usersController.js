@@ -6,6 +6,16 @@ var jwt = require('jsonwebtoken');
 var config = require('../config');
 
 
+/* GET SINGLE project BY ID */
+userRouter.get('/users/:id', function(req, res, next) {
+
+    User.findById(req.params.id).populate(['tasks','ownTasks', 'projects', 'ownProjects', 'comments']).exec(function (err, project) {
+        if (err) return next(err);
+        res.json(project);
+    });
+});
+
+
 //POST route for registration
 userRouter.post('/registration', function (req, res, next) {
     // confirm that user typed same password twice
