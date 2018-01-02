@@ -37,10 +37,6 @@ var UserSchema = new mongoose.Schema({
     ownProjects: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Project'
-    }],
-    comments: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Comment'
     }]
 });
 
@@ -68,14 +64,19 @@ UserSchema.statics.authenticate = function (email, password, callback) {
 //hashing a password before saving it to the database
 UserSchema.pre('save', function (next) {
     var user = this;
-    bcrypt.hash(user.password, 10, function (err, hash) {
-        if (err) {
-            return next(err);
-        }
-        user.password = hash;
-        user.passwordConf = hash;
+    console.log('user', user);
+    if(user.__v === undefined) {
+        bcrypt.hash(user.password, 10, function (err, hash) {
+            if (err) {
+                return next(err);
+            }
+            user.password = hash;
+            user.passwordConf = hash;
+            next();
+        })
+    }else {
         next();
-    })
+    }
 });
 
 

@@ -10,9 +10,17 @@ projectRouter.get('/projects', function(req, res, next) {
     });
 });
 
-/* GET SINGLE project BY ID */
+/* GET only id and title of project BY ID */
 projectRouter.get('/projects/:id', function(req, res, next) {
     Project.findById(req.params.id).populate(['tasks','members', 'comments', 'creator']).exec(function (err, project) {
+        if (err) return next(err);
+        res.json(project);
+    });
+});
+
+/* GET SINGLE project BY ID */
+projectRouter.get('/min-projects/:id', function(req, res, next) {
+    Project.findById(req.params.id, {title: 1}).exec(function (err, project) {
         if (err) return next(err);
         res.json(project);
     });
@@ -21,6 +29,7 @@ projectRouter.get('/projects/:id', function(req, res, next) {
 /* SAVE project */
 projectRouter.post('/projects', function(req, res, next) {
     req.body.creator = req.headers.user_id;
+    req.body.members = [req.headers.user_id];
     Project.create(req.body, function (err, project) {
         if (err) return next(err);
         res.json(project);

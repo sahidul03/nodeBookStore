@@ -17,6 +17,15 @@ taskRouter.get('/tasks/:id', function (req, res, next) {
     });
 });
 
+/* GET only id and title task BY ID */
+taskRouter.get('/min-tasks/:id', function (req, res, next) {
+    Task.findById(req.params.id, {title: 1}).exec(function (err, task) {
+        if (err) return res.json(null);
+        res.json(task);
+    });
+});
+
+
 /* SAVE task */
 taskRouter.post('/tasks', function (req, res, next) {
     req.body.creator = req.headers.user_id;

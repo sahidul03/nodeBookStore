@@ -6,13 +6,29 @@ var jwt = require('jsonwebtoken');
 var config = require('../config');
 
 
-/* GET SINGLE project BY ID */
-userRouter.get('/users/:id', function(req, res, next) {
-
-    User.findById(req.params.id).populate(['tasks','ownTasks', 'projects', 'ownProjects', 'comments']).exec(function (err, project) {
-        if (err) return next(err);
-        res.json(project);
+// GET all users
+userRouter.get('/users', function (req, res, next) {
+    User.find({},{email: 1, username: 1}, function (err, users) {
+        return res.json(users);
     });
+});
+
+/* GET current_user */
+userRouter.get('/current_user', function(req, res, next) {
+    var token = req.headers['x-access-token'];
+    if (!token) return res.status(401).send({auth: false, message: 'No token provided.'});
+
+    jwt.verify(token, config.secret, function (err, decoded) {
+        if (err) return res.status(500).send({auth: false, message: 'Failed to authenticate token.'});
+
+        User.findById(decoded.id, {password: 0, passwordConf: 0}).populate(['tasks','ownTasks', 'projects', 'ownProjects']).exec(function (err, user) {
+            if (err) return res.status(500).send("There was a problem finding the user.");
+            if (!user) return res.status(404).send("No user found.");
+
+            return res.json(user);
+        });
+    });
+
 });
 
 
@@ -42,7 +58,7 @@ userRouter.post('/registration', function (req, res, next) {
             } else {
                 // create a token
                 var token = jwt.sign({id: user._id}, config.secret, {
-                    expiresIn: 86400 // expires in 24 hours
+                    expiresIn: config.tokenExpiredTime // expires in an hour
                 });
                 return res.json({flag: 1, auth: true, token: token});
             }
@@ -71,7 +87,7 @@ userRouter.post('/login', function (req, res, next) {
                         if (response) {
                             // Passwords match
                             var token = jwt.sign({id: user._id}, config.secret, {
-                                expiresIn: 86400 // expires in 24 hours
+                                expiresIn: config.tokenExpiredTime // expires in  an hour
                             });
                             return res.json({flag: 1, auth: true, token: token});
                         } else {

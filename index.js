@@ -27,7 +27,7 @@ app.use(bodyParser.json());
 
 mongoose.Promise = global.Promise;
 
-mongoose.connect('mongodb://localhost/bookStore')
+mongoose.connect('mongodb://localhost/projectManagement')
     .then(function () {
         console.log('connection successful');
     })

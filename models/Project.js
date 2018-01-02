@@ -17,10 +17,6 @@ var ProjectSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
-    comments: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Comment'
-    }],
     updated_at: {type: Date, default: Date.now}
 });
 
@@ -37,6 +33,15 @@ ProjectSchema.post('save', function (next) {
         else {
             user.ownProjects = [];
             user.ownProjects.push(project._id);
+        }
+        if(user.projects){
+            if(user.projects.indexOf(project._id) === -1) {
+                user.projects.push(project._id);
+            }
+        }
+        else {
+            user.projects = [];
+            user.projects.push(project._id);
         }
         user.save();
     });

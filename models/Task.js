@@ -1,5 +1,6 @@
 var mongoose = require('mongoose');
 var User = require('./User');
+var Project = require('./Project');
 
 var TaskSchema = new mongoose.Schema({
     title: String,
@@ -50,6 +51,18 @@ TaskSchema.post('save', function (next) {
             user.ownTasks.push(task._id);
         }
         user.save();
+    });
+    Project.findById(task.project, function (err, project) {
+        if (err) return next(err);
+        if(project.tasks){
+            if(project.tasks.indexOf(task._id) === -1)
+                project.tasks.push(task._id);
+        }
+        else {
+            project.tasks = [];
+            project.tasks.push(task._id);
+        }
+        project.save();
     });
 });
 
