@@ -13,6 +13,14 @@ userRouter.get('/users', function (req, res, next) {
     });
 });
 
+// GET a user by ID
+userRouter.get('/users/:id', function (req, res, next) {
+    User.findById(req.params.id, {password: 0, passwordConf: 0}).populate(['tasks','ownTasks', 'projects', 'ownProjects']).exec(function (err, user) {
+        if (err) return next(err);
+        return res.json(user);
+    });
+});
+
 /* GET current_user */
 userRouter.get('/current_user', function(req, res, next) {
     var token = req.headers['x-access-token'];

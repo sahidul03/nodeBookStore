@@ -1,9 +1,10 @@
 var express = require('express');
 var taskRouter = express.Router();
 var Task = require('../models/Task.js');
+var User = require('../models/User.js');
 /* GET ALL tasks */
 taskRouter.get('/tasks', function (req, res, next) {
-    Task.find().populate(['parentTask', 'subTasks', 'assignee', 'project', 'members', 'comments', 'creator']).exec(function (err, tasks) {
+    Task.find().populate(['parentTask', 'subTasks', 'assignee', 'project', 'comments', 'creator']).exec(function (err, tasks) {
         if (err) return next(err);
         return res.json(tasks);
     });
@@ -11,7 +12,7 @@ taskRouter.get('/tasks', function (req, res, next) {
 
 /* GET SINGLE task BY ID */
 taskRouter.get('/tasks/:id', function (req, res, next) {
-    Task.findById(req.params.id).populate(['parentTask', 'subTasks', 'assignee', 'project', 'members', 'comments', 'creator']).exec(function (err, task) {
+    Task.findById(req.params.id).populate(['parentTask', 'subTasks', 'assignee', 'project', 'comments', 'creator']).exec(function (err, task) {
         if (err) return next(err);
         res.json(task);
     });
@@ -64,6 +65,35 @@ taskRouter.delete('/tasks/:id', function (req, res, next) {
         if (err) return next(err);
         res.json(task);
     });
+});
+
+
+/* Add assignee to task */
+taskRouter.post('/add-assignee', function(req, res, next) {
+    var assignee_id = req.body.assignee_id;
+    var task_id = req.body.task_id;
+    Task.findById(task_id, function (err, task) {
+        if (task) {
+            task.assignee = assignee_id;
+            task.save();
+        }
+    });
+    User.findById(assignee_id, function (err, user) {
+        if (user) {
+            if (user.tasks) {
+                if (user.tasks.indexOf(task_id) === -1) {
+                    user.tasks.push(task_id);
+                }
+            }
+            else {
+                user.tasks = [];
+                user.tasks.push(task_id);
+            }
+            user.save();
+            return res.json(user);
+        }
+    });
+
 });
 
 module.exports = taskRouter;

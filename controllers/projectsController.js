@@ -1,6 +1,7 @@
 var express = require('express');
 var projectRouter = express.Router();
 var Project = require('../models/Project.js');
+var User = require('../models/User.js');
 
 /* GET ALL projects */
 projectRouter.get('/projects', function(req, res, next) {
@@ -50,6 +51,41 @@ projectRouter.delete('/projects/:id', function(req, res, next) {
         if (err) return next(err);
         res.json(project);
     });
+});
+
+/* Add member to project */
+projectRouter.post('/add-member', function(req, res, next) {
+    var member_id = req.body.member_id;
+    var project_id = req.body.project_id;
+    Project.findById(project_id, function (err, project) {
+        if (project) {
+            if (project.members) {
+                if (project.members.indexOf(member_id) === -1)
+                    project.members.push(member_id);
+            }
+            else {
+                project.members = [];
+                project.members.push(member_id);
+            }
+            project.save();
+        }
+    });
+    User.findById(member_id, function (err, user) {
+        if (user) {
+            if (user.projects) {
+                if (user.projects.indexOf(project_id) === -1) {
+                    user.projects.push(project_id);
+                }
+            }
+            else {
+                user.projects = [];
+                user.projects.push(project_id);
+            }
+            user.save();
+            return res.json(user);
+        }
+    });
+
 });
 
 module.exports = projectRouter;
