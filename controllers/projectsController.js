@@ -88,4 +88,34 @@ projectRouter.post('/add-member', function(req, res, next) {
 
 });
 
+
+/* Remove member from project */
+projectRouter.post('/remove-member', function(req, res, next) {
+    var member_id = req.body.member_id;
+    var project_id = req.body.project_id;
+    Project.findById(project_id, function (err, project) {
+        if (project) {
+            if (project.members) {
+                var index = project.members.indexOf(member_id);
+                if ( index > -1)
+                    project.members.splice(index, 1);
+            }
+            project.save();
+        }
+    });
+    User.findById(member_id, function (err, user) {
+        if (user) {
+            if (user.projects) {
+                var index = user.projects.indexOf(project_id);
+                if ( index > -1) {
+                    user.projects.slice(index, 1);
+                }
+            }
+            user.save();
+            return res.json(user);
+        }
+    });
+
+});
+
 module.exports = projectRouter;
