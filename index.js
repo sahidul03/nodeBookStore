@@ -19,8 +19,43 @@ var session = require('express-session');
 var MongoStore = require('connect-mongo')(session);
 var cors = require('cors');
 
+var tasksSocketID = {};
+
+/* Socket IO START */
+var server = require('http').createServer(express());
+var io = require('socket.io')(server);
+
+io.on('connection', function (socket) {
+    socket.on('subscribeToTimer', function (interval) {
+        console.log('client is subscribing to timer with interval ', interval);
+        setInterval(function () {
+            socket.emit('timer', new Date());
+        }, interval);
+    });
+    socket.on('add-user', function(data){
+        tasksSocketID[data.username] = {
+            "socket": socket.id
+        };
+    });
+
+    socket.on('new-comment', function(data){
+        console.log("Sending: " + data.task);
+        tasksSocketID[data.task] = {
+            "socket": socket.id
+        };
+        if (tasksSocketID[data.task]){
+            io.sockets.connected[tasksSocketID[data.task].socket].emit("append-comment", data);
+        } else {
+            console.log("User does not exist: " + data.task);
+        }
+    });
+});
+const port = 8000;
+io.listen(port);
+/* Socket IO END */
+
 // parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({extended: false}));
 
 // parse application/json
 app.use(bodyParser.json());
@@ -35,20 +70,20 @@ mongoose.connect('mongodb://localhost/projectManagement')
         console.error(err);
     });
 
-function checkUserSession (req, res, next) {
-    if(!(req.url === '/users'
+function checkUserSession(req, res, next) {
+    if (!(req.url === '/users'
             || req.url === '/registration/'
             || req.url === '/registration'
             || req.url === '/login'
             || req.url === '/login/'
             || req.url === '/logout'
             || req.url === '/logout/'
-        )){
+        )) {
         var token = req.headers['x-access-token'];
         console.log('access-token: ', token);
-        if (!token) return res.status(401).send({ auth: false, message: 'No token provided.' });
-        jwt.verify(token, config.secret, function(err, decoded) {
-            if (err) return res.status(401).send({ auth: false, message: 'Failed to authenticate token.' });
+        if (!token) return res.status(401).send({auth: false, message: 'No token provided.'});
+        jwt.verify(token, config.secret, function (err, decoded) {
+            if (err) return res.status(401).send({auth: false, message: 'Failed to authenticate token.'});
             // res.status(200).send(decoded);
             User.findById(decoded.id, {password: 0, passwordConf: 0}, function (err, user) {
                 if (err) return res.status(401).send("There was a problem finding the user.");
