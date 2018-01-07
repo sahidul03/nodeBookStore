@@ -24,7 +24,8 @@ var tasksSocketID = {};
 /* Socket IO START */
 var server = require('http').createServer(express());
 var io = require('socket.io')(server);
-
+// task namespace
+const task = io.of('/task');
 io.on('connection', function (socket) {
     socket.on('subscribeToTimer', function (interval) {
         console.log('client is subscribing to timer with interval ', interval);
@@ -32,22 +33,13 @@ io.on('connection', function (socket) {
             socket.emit('timer', new Date());
         }, interval);
     });
-    socket.on('add-user', function(data){
-        tasksSocketID[data.username] = {
-            "socket": socket.id
-        };
+    socket.on('join', function (data) {
+        console.log('join: ', data);
+        socket.join(data.room);
+        // task.in(data.room).emit('message', "New user joined");
     });
-
-    socket.on('new-comment', function(data){
-        console.log("Sending: " + data.task);
-        tasksSocketID[data.task] = {
-            "socket": socket.id
-        };
-        if (tasksSocketID[data.task]){
-            io.sockets.connected[tasksSocketID[data.task].socket].emit("append-comment", data);
-        } else {
-            console.log("User does not exist: " + data.task);
-        }
+    socket.on('new-comment', function (data) {
+        io.in(data.task).emit('append-comment', data);
     });
 });
 const port = 8000;
