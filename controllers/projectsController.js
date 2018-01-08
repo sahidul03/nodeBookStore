@@ -57,7 +57,8 @@ projectRouter.delete('/projects/:id', function(req, res, next) {
 projectRouter.post('/add-member', function(req, res, next) {
     var member_id = req.body.member_id;
     var project_id = req.body.project_id;
-    Project.findById(project_id, function (err, project) {
+    var projectMembers = [];
+        Project.findById(project_id, function (err, project) {
         if (project) {
             if (project.members) {
                 if (project.members.indexOf(member_id) === -1)
@@ -67,6 +68,7 @@ projectRouter.post('/add-member', function(req, res, next) {
                 project.members = [];
                 project.members.push(member_id);
             }
+            projectMembers = project.members;
             project.save();
         }
     });
@@ -81,6 +83,17 @@ projectRouter.post('/add-member', function(req, res, next) {
                 user.projects = [];
                 user.projects.push(project_id);
             }
+
+            if (user.contacts == undefined) {
+                user.contacts = [];
+            }
+            user.contacts = user.contacts.concat(projectMembers);
+
+            user.contacts = user.contacts.filter( function(value, index, self){
+                return self.indexOf(value) === index;
+            } );
+            console.log('user.contacts', user.contacts);
+
             user.save();
             return res.json(user);
         }

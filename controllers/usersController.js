@@ -8,28 +8,38 @@ var config = require('../config');
 
 // GET all users
 userRouter.get('/users', function (req, res, next) {
-    User.find({},{email: 1, username: 1}, function (err, users) {
+    User.find({}, {email: 1, username: 1}, function (err, users) {
         return res.json(users);
     });
 });
 
 // GET a user by ID
 userRouter.get('/users/:id', function (req, res, next) {
-    User.findById(req.params.id, {password: 0, passwordConf: 0}).populate(['tasks','ownTasks', 'projects', 'ownProjects']).exec(function (err, user) {
+    User.findById(req.params.id, {
+        password: 0,
+        passwordConf: 0
+    }).populate(['tasks', 'ownTasks', 'projects', 'ownProjects']).exec(function (err, user) {
         if (err) return next(err);
         return res.json(user);
     });
 });
 
 /* GET current_user */
-userRouter.get('/current_user', function(req, res, next) {
+userRouter.get('/current_user', function (req, res, next) {
     var token = req.headers['x-access-token'];
     if (!token) return res.status(401).send({auth: false, message: 'No token provided.'});
 
     jwt.verify(token, config.secret, function (err, decoded) {
         if (err) return res.status(500).send({auth: false, message: 'Failed to authenticate token.'});
 
-        User.findById(decoded.id, {password: 0, passwordConf: 0}).populate(['tasks','ownTasks', 'projects', 'ownProjects']).exec(function (err, user) {
+        User.findById(decoded.id, {
+            password: 0,
+            passwordConf: 0
+        }).populate(['tasks', 'ownTasks', 'projects', 'ownProjects',{
+            path: 'contacts',
+            select: 'username email',
+            model: 'User'
+        }]).exec(function (err, user) {
             if (err) return res.status(500).send("There was a problem finding the user.");
             if (!user) return res.status(404).send("No user found.");
 
@@ -61,7 +71,7 @@ userRouter.post('/registration', function (req, res, next) {
 
         User.create(userData, function (error, user) {
             if (error) {
-                if(error.code == 11000 && error.name == 'MongoError')
+                if (error.code == 11000 && error.name == 'MongoError')
                     return res.json({flag: 0, message: 'Already exist with this email or username.'});
             } else {
                 // create a token
@@ -72,7 +82,7 @@ userRouter.post('/registration', function (req, res, next) {
             }
         });
 
-    }else {
+    } else {
         return res.json({flag: 0, message: 'All fields required.'});
     }
 });
@@ -146,7 +156,7 @@ userRouter.get('/logging-status', function (req, res, next) {
 
 // GET for logout logout
 userRouter.post('/logout', function (req, res, next) {
-    return res.json({flag: 1, auth: false, token: null });
+    return res.json({flag: 1, auth: false, token: null});
 });
 
 module.exports = userRouter;

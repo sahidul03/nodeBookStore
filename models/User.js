@@ -37,6 +37,14 @@ var UserSchema = new mongoose.Schema({
     ownProjects: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Project'
+    }],
+    conversations: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Conversation'
+    }],
+    contacts: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
     }]
 });
 
