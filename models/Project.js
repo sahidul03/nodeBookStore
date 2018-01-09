@@ -1,5 +1,6 @@
 var mongoose = require('mongoose');
 var User = require('./User');
+var Conversation = require('./Conversation');
 
 var ProjectSchema = new mongoose.Schema({
     title: String,
@@ -17,8 +18,28 @@ var ProjectSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
+    conversation: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Conversation'
+    },
     updated_at: {type: Date, default: Date.now}
 });
+
+// //hashing a password before saving it to the database
+// ProjectSchema.pre('save', function (next) {
+//     var project = this;
+//     if(project.conversation === undefined || project.conversation === '') {
+//         Conversation.create({status: 1}, function (err, conversation) {
+//             if (err) return next(err);
+//             if(conversation){
+//                 project.conversation = conversation._id
+//             }
+//             next();
+//         });
+//     }else {
+//         next();
+//     }
+// });
 
 // Add project ID in associated user document
 ProjectSchema.post('save', function (next) {

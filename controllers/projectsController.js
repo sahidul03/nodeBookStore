@@ -1,6 +1,7 @@
 var express = require('express');
 var projectRouter = express.Router();
 var Project = require('../models/Project.js');
+var Conversation = require('../models/Conversation.js');
 var User = require('../models/User.js');
 
 /* GET ALL projects */
@@ -33,7 +34,14 @@ projectRouter.post('/projects', function(req, res, next) {
     req.body.members = [req.headers.user_id];
     Project.create(req.body, function (err, project) {
         if (err) return next(err);
-        res.json(project);
+        Conversation.create({status: 1}, function (err, conversation) {
+            if (err) return next(err);
+            if(conversation){
+                project.conversation = conversation._id
+            }
+            project.save();
+            res.json(project);
+        });
     });
 });
 

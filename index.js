@@ -4,12 +4,14 @@ var app = express();
 var router = express.Router();
 var mongoose = require('mongoose');
 var User = require('./models/User');
+var Message = require('./models/Message');
 var config = require('./config');
 var jwt = require('jsonwebtoken');
 var bookRouter = require('./controllers/booksController');
 var projectRouter = require('./controllers/projectsController');
 var taskRouter = require('./controllers/tasksController');
 var commentRouter = require('./controllers/commentsController');
+var conversationsController = require('./controllers/conversationsController');
 var authorRouter = require('./controllers/authorsController');
 var bookCategoryRouter = require('./controllers/bookCategoriesController');
 var todoRouter = require('./controllers/todosController');
@@ -37,6 +39,28 @@ io.on('connection', function (socket) {
         console.log('join: ', data);
         socket.join(data.room);
         // task.in(data.room).emit('message', "New user joined");
+    });
+    socket.on('joinAllProjectsAndSelfUser', function (data) {
+        User.findById(data.userId, {
+            password: 0,
+            passwordConf: 0
+        }).populate(['projects']).exec(function (err, user) {
+            if(user){
+                socket.join(data.userId);
+                user.projects.map(function (project) {
+                    if(project.conversation) socket.join(project.conversation);
+                })
+            }
+        });
+    });
+    socket.on('new-message', function (data) {
+        Message.create({conversation: data.room, sender: data.sender, body: data.message}, function (err, message) {
+            if(message){
+                Message.populate(message, {path: 'sender', select: 'username email', model: 'User'}, function(err, pMessage) {
+                    io.in(data.room).emit('append-message', message);
+                });
+            }
+        });
     });
     socket.on('new-comment', function (data) {
         io.in(data.task).emit('append-comment', data);
@@ -99,6 +123,7 @@ app.use(userRouter);
 app.use(projectRouter);
 app.use(taskRouter);
 app.use(commentRouter);
+app.use(conversationsController);
 app.use(bookRouter);
 app.use(authorRouter);
 app.use(bookCategoryRouter);
