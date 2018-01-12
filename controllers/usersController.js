@@ -35,7 +35,14 @@ userRouter.get('/current_user', function (req, res, next) {
         User.findById(decoded.id, {
             password: 0,
             passwordConf: 0
-        }).populate(['tasks', 'ownTasks', 'projects', 'ownProjects',{
+        }).populate(['tasks', 'ownTasks', 'ownProjects',{
+            path: 'projects',
+            populate: {
+                path: 'members',
+                select: 'username email',
+                model: 'User'
+            }
+        },{
             path: 'contacts',
             select: 'username email',
             model: 'User'
