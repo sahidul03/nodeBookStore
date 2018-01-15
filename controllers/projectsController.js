@@ -92,15 +92,15 @@ projectRouter.post('/add-member', function(req, res, next) {
                 user.projects.push(project_id);
             }
 
-            if (user.contacts == undefined) {
-                user.contacts = [];
-            }
-            user.contacts = user.contacts.concat(projectMembers);
-
-            user.contacts = user.contacts.filter( function(value, index, self){
-                return self.indexOf(value) === index;
-            } );
-            console.log('user.contacts', user.contacts);
+            // if (user.contacts == undefined) {
+            //     user.contacts = [];
+            // }
+            // user.contacts = user.contacts.concat(projectMembers);
+            //
+            // user.contacts = user.contacts.filter( function(value, index, self){
+            //     return self.indexOf(value) === index;
+            // } );
+            // console.log('user.contacts', user.contacts);
 
             user.save();
             return res.json(user);

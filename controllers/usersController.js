@@ -166,4 +166,38 @@ userRouter.post('/logout', function (req, res, next) {
     return res.json({flag: 1, auth: false, token: null});
 });
 
+
+/* Send friend request to project member */
+userRouter.post('/send-friend-request', function(req, res, next) {
+    var sender = req.body.sender;
+    var receiver = req.body.receiver;
+
+    User.findById(sender, function (err, user) {
+        if (user) {
+            if (user.sentFriendRequests == undefined) {
+                user.sentFriendRequests = [];
+            }
+            if(user.sentFriendRequests.indexOf(receiver) === -1) {
+                user.sentFriendRequests.push(receiver);
+            }
+            user.save();
+        }
+    });
+
+    User.findById(receiver, function (err, user) {
+        if (user) {
+            if (user.gotFriendRequests == undefined) {
+                user.gotFriendRequests = [];
+            }
+            if(user.gotFriendRequests.indexOf(sender) === -1) {
+                user.gotFriendRequests.push(sender);
+            }
+            user.save();
+            return res.json({receiver: receiver});
+        }
+    });
+
+});
+
+
 module.exports = userRouter;
