@@ -200,4 +200,74 @@ userRouter.post('/send-friend-request', function(req, res, next) {
 });
 
 
+/* Accept friend request to project member */
+userRouter.post('/accept-friend-request', function(req, res, next) {
+    var sender = req.body.sender;
+    var receiver = req.body.receiver;
+
+    User.findById(receiver, function (err, user) {
+        if (user) {
+            var index = user.gotFriendRequests.indexOf(sender);
+            if(index !== -1) {
+                user.gotFriendRequests.splice(index, 1);
+            }
+            if (user.contacts == undefined) {
+                user.contacts = [];
+            }
+            if(user.contacts.indexOf(sender) === -1) {
+                user.contacts.push(sender);
+            }
+            user.save();
+        }
+    });
+
+    User.findById(sender, function (err, user) {
+        if (user) {
+            var index = user.sentFriendRequests.indexOf(receiver);
+            if(index !== -1) {
+                user.sentFriendRequests.splice(index, 1);
+            }
+            if (user.contacts == undefined) {
+                user.contacts = [];
+            }
+            if(user.contacts.indexOf(receiver) === -1) {
+                user.contacts.push(receiver);
+            }
+            user.save();
+            return res.json({_id: user._id, username: user.username});
+        }
+    });
+
+});
+
+
+/* Reject friend request to project member */
+userRouter.post('/reject-friend-request', function(req, res, next) {
+    var sender = req.body.sender;
+    var receiver = req.body.receiver;
+
+    User.findById(receiver, function (err, user) {
+        if (user) {
+            var index = user.gotFriendRequests.indexOf(sender);
+            if(index !== -1) {
+                user.gotFriendRequests.splice(index, 1);
+            }
+            user.save();
+        }
+    });
+
+    User.findById(sender, function (err, user) {
+        if (user) {
+            var index = user.sentFriendRequests.indexOf(receiver);
+            if(index !== -1) {
+                user.sentFriendRequests.splice(index, 1);
+            }
+            user.save();
+            return res.json({sender: sender});
+        }
+    });
+
+});
+
+
 module.exports = userRouter;
