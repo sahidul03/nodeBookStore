@@ -1,6 +1,7 @@
 var express = require('express');
 var userRouter = express.Router();
 var User = require('../models/User.js');
+var Conversation = require('../models/Conversation.js');
 var bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
 var config = require('../config');
@@ -204,6 +205,9 @@ userRouter.post('/send-friend-request', function(req, res, next) {
 userRouter.post('/accept-friend-request', function(req, res, next) {
     var sender = req.body.sender;
     var receiver = req.body.receiver;
+    var conversation = Conversation.create({status: 1, users: [sender, receiver]}, function (err, conversation) {
+        if (err) return next(err);
+    });
 
     User.findById(receiver, function (err, user) {
         if (user) {
@@ -216,6 +220,13 @@ userRouter.post('/accept-friend-request', function(req, res, next) {
             }
             if(user.contacts.indexOf(sender) === -1) {
                 user.contacts.push(sender);
+            }
+
+            if (user.conversations == undefined) {
+                user.conversations = [];
+            }
+            if(user.conversations.indexOf(conversation._id) === -1) {
+                user.conversations.push(conversation._id);
             }
             user.save();
         }
@@ -233,8 +244,15 @@ userRouter.post('/accept-friend-request', function(req, res, next) {
             if(user.contacts.indexOf(receiver) === -1) {
                 user.contacts.push(receiver);
             }
+
+            if (user.conversations == undefined) {
+                user.conversations = [];
+            }
+            if(user.conversations.indexOf(conversation._id) === -1) {
+                user.conversations.push(conversation._id);
+            }
             user.save();
-            return res.json({_id: user._id, username: user.username});
+            return res.json({_id: user._id, username: user.username, conversation: conversation._id});
         }
     });
 

@@ -35,6 +35,12 @@ io.on('connection', function (socket) {
             socket.emit('timer', new Date());
         }, interval);
     });
+    socket.on('sendNotificationToUserConversationWillStart', function (data) {
+        io.in(data.receiver).emit('willGetMessageFromThisConversation', data);
+    });
+    socket.on('sendNotificationForAcceptFriendRequest', function (data) {
+        io.in(data.receiver).emit('getNotificationForAcceptFriendRequest', data);
+    });
     socket.on('join', function (data) {
         console.log('join: ', data);
         socket.join(data.room);

@@ -27,9 +27,25 @@ conversationRouter.get('/conversations/:id', function (req, res, next) {
             model: 'User'
         }
     }]).exec(function (err, conversation) {
-        console.log('conversation',conversation);
         if (err) return next(err);
         res.json(conversation);
+    });
+});
+
+
+/* GET SINGLE conversation BY contacts ID'S */
+conversationRouter.post('/conversations/get-conversation-of-contact', function (req, res, next) {
+    var users = req.body.users;
+    Conversation.find({ users: { $all: users } }).populate([{
+        path: 'messages',
+        populate: {
+            path: 'sender',
+            select: 'username email',
+            model: 'User'
+        }
+    }]).exec(function (err, conversation) {
+        if (err) return next(err);
+        res.json(conversation[0]);
     });
 });
 
