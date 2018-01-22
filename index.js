@@ -62,7 +62,7 @@ io.on('connection', function (socket) {
     socket.on('new-message', function (data) {
         Message.create({conversation: data.room, sender: data.sender, body: data.message}, function (err, message) {
             if(message){
-                Message.populate(message, {path: 'sender', select: 'username email', model: 'User'}, function(err, pMessage) {
+                Message.populate(message, {path: 'sender', select: 'username email photo', model: 'User'}, function(err, pMessage) {
                     io.in(data.room).emit('append-message', message);
                 });
             }
@@ -77,10 +77,12 @@ io.listen(port);
 /* Socket IO END */
 
 // parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({extended: false}));
+// app.use(bodyParser.urlencoded({extended: false}));
 
 // parse application/json
-app.use(bodyParser.json());
+// app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
 mongoose.Promise = global.Promise;
 
@@ -93,6 +95,8 @@ mongoose.connect('mongodb://localhost/projectManagement')
     });
 
 function checkUserSession(req, res, next) {
+    var uploadedFile = req.url.indexOf('/uploads/');
+    console.log('uploadedFile :', uploadedFile);
     if (!(req.url === '/users'
             || req.url === '/registration/'
             || req.url === '/registration'
@@ -100,6 +104,7 @@ function checkUserSession(req, res, next) {
             || req.url === '/login/'
             || req.url === '/logout'
             || req.url === '/logout/'
+            || uploadedFile > -1
         )) {
         var token = req.headers['x-access-token'];
         console.log('access-token: ', token);
@@ -112,6 +117,7 @@ function checkUserSession(req, res, next) {
                 if (!user) return res.status(401).send("No user found.");
             });
             req.headers.user_id = decoded.id;
+            req.body.user_id = decoded.id;
             next()
         });
     }
@@ -123,6 +129,7 @@ function checkUserSession(req, res, next) {
 }
 
 app.use(cors());
+app.use(express.static('public'));
 app.use(checkUserSession);
 
 app.use(userRouter);

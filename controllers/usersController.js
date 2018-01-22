@@ -7,6 +7,12 @@ var jwt = require('jsonwebtoken');
 var config = require('../config');
 
 
+var multer  = require('multer');
+// var upload = multer({ dest: 'uploads/' });
+const crypto = require('crypto');
+const mime = require('mime-types');
+var path = require("path");
+
 // GET all users
 userRouter.get('/users', function (req, res, next) {
     User.find({}, {email: 1, username: 1}, function (err, users) {
@@ -40,12 +46,12 @@ userRouter.get('/current_user', function (req, res, next) {
             path: 'projects',
             populate: {
                 path: 'members',
-                select: 'username email',
+                select: 'username email photo',
                 model: 'User'
             }
         },{
             path: 'contacts',
-            select: 'username email',
+            select: 'username email photo',
             model: 'User'
         }]).exec(function (err, user) {
             if (err) return res.status(500).send("There was a problem finding the user.");
@@ -201,7 +207,7 @@ userRouter.post('/send-friend-request', function(req, res, next) {
 });
 
 
-/* Accept friend request to project member */
+/* Accept friend request of project member */
 userRouter.post('/accept-friend-request', function(req, res, next) {
     var sender = req.body.sender;
     var receiver = req.body.receiver;
@@ -252,14 +258,14 @@ userRouter.post('/accept-friend-request', function(req, res, next) {
                 user.conversations.push(conversation._id);
             }
             user.save();
-            return res.json({_id: user._id, username: user.username, conversation: conversation._id});
+            return res.json({_id: user._id, username: user.username, photo: user.photo, conversation: conversation._id});
         }
     });
 
 });
 
 
-/* Reject friend request to project member */
+/* Reject friend request of project member */
 userRouter.post('/reject-friend-request', function(req, res, next) {
     var sender = req.body.sender;
     var receiver = req.body.receiver;
@@ -285,6 +291,32 @@ userRouter.post('/reject-friend-request', function(req, res, next) {
         }
     });
 
+});
+
+
+var storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, './public/uploads/images/')
+    },
+    filename: function (req, file, cb) {
+        crypto.pseudoRandomBytes(16, function (err, raw) {
+            cb(null, raw.toString('hex') + Date.now() + '.' + mime.extension(file.mimetype));
+        });
+    }
+});
+var upload = multer({ storage: storage });
+
+/* Save profile image of user */
+userRouter.post('/save-profile-image', upload.single('imageFile'), function(req, res, next) {
+    User.findById(req.headers.user_id, function (err, user) {
+        if(err) return res.json({photo: null, message: 'Not saved.'});
+        if (user) {
+           user.photo = '/uploads/images/' + req.file.filename;
+           user.save();
+           return res.json({photo: user.photo});
+        }
+    });
+    // return res.json({photo: null, message: 'Not saved'});
 });
 
 

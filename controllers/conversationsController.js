@@ -8,7 +8,7 @@ conversationRouter.get('/conversations', function (req, res, next) {
         path: 'messages',
         populate: {
             path: 'sender',
-            select: 'username email',
+            select: 'username email photo',
             model: 'User'
         }
     }]).exec(function (err, conversations) {
@@ -23,7 +23,7 @@ conversationRouter.get('/conversations/:id', function (req, res, next) {
         path: 'messages',
         populate: {
             path: 'sender',
-            select: 'username email',
+            select: 'username email photo',
             model: 'User'
         }
     }]).exec(function (err, conversation) {
@@ -40,7 +40,7 @@ conversationRouter.post('/conversations/get-conversation-of-contact', function (
         path: 'messages',
         populate: {
             path: 'sender',
-            select: 'username email',
+            select: 'username email photo',
             model: 'User'
         }
     }]).exec(function (err, conversation) {
