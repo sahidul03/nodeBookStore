@@ -63,6 +63,35 @@ userRouter.get('/current_user', function (req, res, next) {
 
 });
 
+/* GET current_user_basic_info */
+userRouter.get('/current_user_basic_info', function (req, res, next) {
+    var token = req.headers['x-access-token'];
+    if (!token) return res.status(401).send({auth: false, message: 'No token provided.'});
+
+    jwt.verify(token, config.secret, function (err, decoded) {
+        if (err) return res.status(500).send({auth: false, message: 'Failed to authenticate token.'});
+
+        User.findById(decoded.id, {
+            password: 0,
+            passwordConf: 0,
+            gotFriendRequests: 0,
+            sentFriendRequests: 0,
+            contacts: 0,
+            conversations: 0,
+            ownProjects: 0,
+            projects: 0,
+            ownTasks: 0,
+            tasks: 0
+        }).exec(function (err, user) {
+            if (err) return res.status(500).send("There was a problem finding the user.");
+            if (!user) return res.status(404).send("No user found.");
+
+            return res.json(user);
+        });
+    });
+
+});
+
 
 //POST route for registration
 userRouter.post('/registration', function (req, res, next) {
@@ -84,6 +113,8 @@ userRouter.post('/registration', function (req, res, next) {
         };
 
         User.create(userData, function (error, user) {
+            console.log('error: ', error);
+            console.log('user: ', user);
             if (error) {
                 if (error.code == 11000 && error.name == 'MongoError')
                     return res.json({flag: 0, message: 'Already exist with this email or username.'});

@@ -10,7 +10,6 @@ var UserSchema = new mongoose.Schema({
     },
     photo: {
         type: String,
-        unique: true,
         trim: true,
         required: true,
         default: '/uploads/images/pp.png'
