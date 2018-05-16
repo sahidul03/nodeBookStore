@@ -96,7 +96,6 @@ mongoose.connect('mongodb://localhost/projectManagement')
 
 function checkUserSession(req, res, next) {
     var uploadedFile = req.url.indexOf('/uploads/');
-    console.log('uploadedFile :', uploadedFile);
     if (!(req.url === '/users'
             || req.url === '/registration/'
             || req.url === '/registration'

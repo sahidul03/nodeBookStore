@@ -5,6 +5,7 @@ var Conversation = require('../models/Conversation.js');
 var bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
 var config = require('../config');
+var async = require("async");
 
 
 var multer  = require('multer');
@@ -95,42 +96,79 @@ userRouter.get('/current_user_basic_info', function (req, res, next) {
 
 //POST route for registration
 userRouter.post('/registration', function (req, res, next) {
-    // confirm that user typed same password twice
-    if (req.body.password !== req.body.passwordConf) {
-        return res.json({flag: 0, message: 'Passwords don\'t match.'});
-    }
 
-    if (req.body.email &&
-        req.body.username &&
-        req.body.password &&
-        req.body.passwordConf) {
+    async.waterfall([
+        _password_mismatch(req),
+        _usernameRequired,
+        _emailRequired,
+        _passwordRequired
+    ], function (programError, errors) {
+        if (programError) {
+            console.log('Something is wrong!');
+            console.log(programError);
+        }
+        console.log(errors);
+            if (1) {
+                var userData = {
+                    email: req.body.email,
+                    username: req.body.username,
+                    password: req.body.password,
+                    passwordConf: req.body.passwordConf
+                };
 
-        var userData = {
-            email: req.body.email,
-            username: req.body.username,
-            password: req.body.password,
-            passwordConf: req.body.passwordConf
-        };
-
-        User.create(userData, function (error, user) {
-            console.log('error: ', error);
-            console.log('user: ', user);
-            if (error) {
-                if (error.code == 11000 && error.name == 'MongoError')
-                    return res.json({flag: 0, message: 'Already exist with this email or username.'});
-            } else {
-                // create a token
-                var token = jwt.sign({id: user._id}, config.secret, {
-                    expiresIn: config.tokenExpiredTime // expires in an hour
+                User.create(userData, function (error, user) {
+                    if (error) {
+                        if (error.code == 11000 && error.name == 'MongoError')
+                            return res.json({flag: 0, message: 'Already exist with this email or username.'});
+                    } else {
+                        // create a token
+                        var token = jwt.sign({id: user._id}, config.secret, {
+                            expiresIn: config.tokenExpiredTime // expires in an hour
+                        });
+                        return res.json({flag: 1, auth: true, token: token});
+                    }
                 });
-                return res.json({flag: 1, auth: true, token: token});
-            }
-        });
 
-    } else {
-        return res.json({flag: 0, message: 'All fields required.'});
-    }
+            } else {
+                return res.json({flag: 0, message: 'All fields required.', errors: errors});
+            }
+
+    });
+
 });
+
+// password mismatch
+function _password_mismatch (req) {
+    return function (callback) {
+        var body = req.body;
+        var errors = {};
+        if (req.body.password !== req.body.passwordConf) {
+            errors.passwordConf = 'Passwords don\'t match.';
+        }
+        callback (null, errors, body);
+    }
+}
+
+function _usernameRequired (errors, body, callback) {
+        if(body.username == ''){
+            errors.username = 'Username can\'t be blank.';
+        }
+        callback (null, errors, body);
+    }
+
+function _emailRequired (errors, body, callback) {
+        if(body.email == ''){
+            errors.email = 'Email can\'t be blank.';
+        }
+        callback (null, errors, body);
+    }
+
+function _passwordRequired (errors, body, callback) {
+        if(body.password == ''){
+            errors.password = 'Password can\'t be blank.';
+        }
+        callback (null, errors, body);
+    }
 
 // POST route for Login
 userRouter.post('/login', function (req, res, next) {
