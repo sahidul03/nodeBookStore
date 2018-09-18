@@ -4,6 +4,7 @@ var Conversation = require('./Conversation');
 
 var ProjectSchema = new mongoose.Schema({
     title: String,
+    shortName: String,
     description: String,
     status: {type: Number, default: 1},
     tasks: [{

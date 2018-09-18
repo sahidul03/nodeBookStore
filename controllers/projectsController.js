@@ -14,7 +14,14 @@ projectRouter.get('/projects', function(req, res, next) {
 
 /* GET only id and title of project BY ID */
 projectRouter.get('/projects/:id', function(req, res, next) {
-    Project.findById(req.params.id).populate(['tasks','members', 'comments', 'creator']).exec(function (err, project) {
+    Project.findById(req.params.id).populate([{
+        path: 'tasks',
+        populate: {
+            path: 'creator',
+            select: 'username email photo',
+            model: 'User'
+        }
+    },'members', 'comments', 'creator']).exec(function (err, project) {
         if (err) return next(err);
         res.json(project);
     });
