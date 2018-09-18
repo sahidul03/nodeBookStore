@@ -8,7 +8,7 @@ var config = require('../config');
 var async = require("async");
 
 
-var multer  = require('multer');
+var multer = require('multer');
 // var upload = multer({ dest: 'uploads/' });
 const crypto = require('crypto');
 const mime = require('mime-types');
@@ -43,14 +43,14 @@ userRouter.get('/current_user', function (req, res, next) {
         User.findById(decoded.id, {
             password: 0,
             passwordConf: 0
-        }).populate(['tasks', 'ownTasks', 'ownProjects',{
+        }).populate(['tasks', 'ownTasks', 'ownProjects', {
             path: 'projects',
             populate: {
                 path: 'members',
                 select: 'username email photo',
                 model: 'User'
             }
-        },{
+        }, {
             path: 'contacts',
             select: 'username email photo',
             model: 'User'
@@ -108,67 +108,67 @@ userRouter.post('/registration', function (req, res, next) {
             console.log(programError);
         }
         console.log(errors);
-            if (1) {
-                var userData = {
-                    email: req.body.email,
-                    username: req.body.username,
-                    password: req.body.password,
-                    passwordConf: req.body.passwordConf
-                };
+        if (1) {
+            var userData = {
+                email: req.body.email,
+                username: req.body.username,
+                password: req.body.password,
+                passwordConf: req.body.passwordConf
+            };
 
-                User.create(userData, function (error, user) {
-                    if (error) {
-                        if (error.code == 11000 && error.name == 'MongoError')
-                            return res.json({flag: 0, message: 'Already exist with this email or username.'});
-                    } else {
-                        // create a token
-                        var token = jwt.sign({id: user._id}, config.secret, {
-                            expiresIn: config.tokenExpiredTime // expires in an hour
-                        });
-                        return res.json({flag: 1, auth: true, token: token});
-                    }
-                });
+            User.create(userData, function (error, user) {
+                if (error) {
+                    if (error.code == 11000 && error.name == 'MongoError')
+                        return res.json({flag: 0, message: 'Already exist with this email or username.'});
+                } else {
+                    // create a token
+                    var token = jwt.sign({id: user._id}, config.secret, {
+                        expiresIn: config.tokenExpiredTime // expires in an hour
+                    });
+                    return res.json({flag: 1, auth: true, token: token});
+                }
+            });
 
-            } else {
-                return res.json({flag: 0, message: 'All fields required.', errors: errors});
-            }
+        } else {
+            return res.json({flag: 0, message: 'All fields required.', errors: errors});
+        }
 
     });
 
 });
 
 // password mismatch
-function _password_mismatch (req) {
+function _password_mismatch(req) {
     return function (callback) {
         var body = req.body;
         var errors = {};
         if (req.body.password !== req.body.passwordConf) {
             errors.passwordConf = 'Passwords don\'t match.';
         }
-        callback (null, errors, body);
+        callback(null, errors, body);
     }
 }
 
-function _usernameRequired (errors, body, callback) {
-        if(body.username == ''){
-            errors.username = 'Username can\'t be blank.';
-        }
-        callback (null, errors, body);
+function _usernameRequired(errors, body, callback) {
+    if (body.username == '') {
+        errors.username = 'Username can\'t be blank.';
     }
+    callback(null, errors, body);
+}
 
-function _emailRequired (errors, body, callback) {
-        if(body.email == ''){
-            errors.email = 'Email can\'t be blank.';
-        }
-        callback (null, errors, body);
+function _emailRequired(errors, body, callback) {
+    if (body.email == '') {
+        errors.email = 'Email can\'t be blank.';
     }
+    callback(null, errors, body);
+}
 
-function _passwordRequired (errors, body, callback) {
-        if(body.password == ''){
-            errors.password = 'Password can\'t be blank.';
-        }
-        callback (null, errors, body);
+function _passwordRequired(errors, body, callback) {
+    if (body.password == '') {
+        errors.password = 'Password can\'t be blank.';
     }
+    callback(null, errors, body);
+}
 
 // POST route for Login
 userRouter.post('/login', function (req, res, next) {
@@ -244,7 +244,7 @@ userRouter.post('/logout', function (req, res, next) {
 
 
 /* Send friend request to project member */
-userRouter.post('/send-friend-request', function(req, res, next) {
+userRouter.post('/send-friend-request', function (req, res, next) {
     var sender = req.body.sender;
     var receiver = req.body.receiver;
 
@@ -253,7 +253,7 @@ userRouter.post('/send-friend-request', function(req, res, next) {
             if (user.sentFriendRequests == undefined) {
                 user.sentFriendRequests = [];
             }
-            if(user.sentFriendRequests.indexOf(receiver) === -1) {
+            if (user.sentFriendRequests.indexOf(receiver) === -1) {
                 user.sentFriendRequests.push(receiver);
             }
             user.save();
@@ -265,7 +265,7 @@ userRouter.post('/send-friend-request', function(req, res, next) {
             if (user.gotFriendRequests == undefined) {
                 user.gotFriendRequests = [];
             }
-            if(user.gotFriendRequests.indexOf(sender) === -1) {
+            if (user.gotFriendRequests.indexOf(sender) === -1) {
                 user.gotFriendRequests.push(sender);
             }
             user.save();
@@ -277,7 +277,7 @@ userRouter.post('/send-friend-request', function(req, res, next) {
 
 
 /* Accept friend request of project member */
-userRouter.post('/accept-friend-request', function(req, res, next) {
+userRouter.post('/accept-friend-request', function (req, res, next) {
     var sender = req.body.sender;
     var receiver = req.body.receiver;
     var conversation = Conversation.create({status: 1, users: [sender, receiver]}, function (err, conversation) {
@@ -287,20 +287,20 @@ userRouter.post('/accept-friend-request', function(req, res, next) {
     User.findById(receiver, function (err, user) {
         if (user) {
             var index = user.gotFriendRequests.indexOf(sender);
-            if(index !== -1) {
+            if (index !== -1) {
                 user.gotFriendRequests.splice(index, 1);
             }
             if (user.contacts == undefined) {
                 user.contacts = [];
             }
-            if(user.contacts.indexOf(sender) === -1) {
+            if (user.contacts.indexOf(sender) === -1) {
                 user.contacts.push(sender);
             }
 
             if (user.conversations == undefined) {
                 user.conversations = [];
             }
-            if(user.conversations.indexOf(conversation._id) === -1) {
+            if (user.conversations.indexOf(conversation._id) === -1) {
                 user.conversations.push(conversation._id);
             }
             user.save();
@@ -310,24 +310,29 @@ userRouter.post('/accept-friend-request', function(req, res, next) {
     User.findById(sender, function (err, user) {
         if (user) {
             var index = user.sentFriendRequests.indexOf(receiver);
-            if(index !== -1) {
+            if (index !== -1) {
                 user.sentFriendRequests.splice(index, 1);
             }
             if (user.contacts == undefined) {
                 user.contacts = [];
             }
-            if(user.contacts.indexOf(receiver) === -1) {
+            if (user.contacts.indexOf(receiver) === -1) {
                 user.contacts.push(receiver);
             }
 
             if (user.conversations == undefined) {
                 user.conversations = [];
             }
-            if(user.conversations.indexOf(conversation._id) === -1) {
+            if (user.conversations.indexOf(conversation._id) === -1) {
                 user.conversations.push(conversation._id);
             }
             user.save();
-            return res.json({_id: user._id, username: user.username, photo: user.photo, conversation: conversation._id});
+            return res.json({
+                _id: user._id,
+                username: user.username,
+                photo: user.photo,
+                conversation: conversation._id
+            });
         }
     });
 
@@ -335,14 +340,14 @@ userRouter.post('/accept-friend-request', function(req, res, next) {
 
 
 /* Reject friend request of project member */
-userRouter.post('/reject-friend-request', function(req, res, next) {
+userRouter.post('/reject-friend-request', function (req, res, next) {
     var sender = req.body.sender;
     var receiver = req.body.receiver;
 
     User.findById(receiver, function (err, user) {
         if (user) {
             var index = user.gotFriendRequests.indexOf(sender);
-            if(index !== -1) {
+            if (index !== -1) {
                 user.gotFriendRequests.splice(index, 1);
             }
             user.save();
@@ -352,7 +357,7 @@ userRouter.post('/reject-friend-request', function(req, res, next) {
     User.findById(sender, function (err, user) {
         if (user) {
             var index = user.sentFriendRequests.indexOf(receiver);
-            if(index !== -1) {
+            if (index !== -1) {
                 user.sentFriendRequests.splice(index, 1);
             }
             user.save();
@@ -373,16 +378,16 @@ var storage = multer.diskStorage({
         });
     }
 });
-var upload = multer({ storage: storage });
+var upload = multer({storage: storage});
 
 /* Save profile image of user */
-userRouter.post('/save-profile-image', upload.single('imageFile'), function(req, res, next) {
+userRouter.post('/save-profile-image', upload.single('imageFile'), function (req, res, next) {
     User.findById(req.headers.user_id, function (err, user) {
-        if(err) return res.json({photo: null, message: 'Not saved.'});
+        if (err) return res.json({photo: null, message: 'Not saved.'});
         if (user) {
-           user.photo = '/uploads/images/' + req.file.filename;
-           user.save();
-           return res.json({photo: user.photo});
+            user.photo = '/uploads/images/' + req.file.filename;
+            user.save();
+            return res.json({photo: user.photo});
         }
     });
     // return res.json({photo: null, message: 'Not saved'});
