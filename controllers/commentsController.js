@@ -22,7 +22,7 @@ commentRouter.post('/comments', function(req, res, next) {
     req.body.commenter = req.headers.user_id;
     Comment.create(req.body, function (err, comment) {
         if (err) return next(err);
-        Comment.populate(comment, {path: 'commenter', select: 'username email', model: 'User'}, function(err, book) {
+        Comment.populate(comment, {path: 'commenter', select: 'username email photo', model: 'User'}, function(err, book) {
             res.json(comment);
         });
     });

@@ -16,7 +16,7 @@ taskRouter.get('/tasks/:id', function (req, res, next) {
         path: 'comments',
         populate: {
             path: 'commenter',
-            select: 'username email',
+            select: 'username email photo',
             model: 'User'
         }
     }, 'creator']).exec(function (err, task) {
