@@ -12,14 +12,45 @@ taskRouter.get('/tasks', function (req, res, next) {
 
 /* GET SINGLE task BY ID */
 taskRouter.get('/tasks/:id', function (req, res, next) {
-    Task.findById(req.params.id).populate(['parentTask', 'subTasks', 'assignee', 'project',{
+    Task.findById(req.params.id).populate([
+    {
+        path: 'parentTask',
+        select: 'taskNumber title description updated_at'
+    }, 
+    {
+        path: 'subTasks',
+        populate: [{
+            path: 'creator',
+            select: 'username email photo',
+            model: 'User'
+        },
+        {
+            path: 'assignee',
+            select: 'username email photo',
+            model: 'User'
+        }],
+        select: 'creator assignee taskNumber title description updated_at'
+    }, 
+    {
+        path: 'assignee',
+        select: 'username email photo'
+    },
+    {
+        path: 'project',
+        select: 'title shortName description'
+    },
+    {
         path: 'comments',
         populate: {
             path: 'commenter',
             select: 'username email photo',
             model: 'User'
         }
-    }, 'creator']).exec(function (err, task) {
+    },
+    {
+        path: 'creator',
+        select: 'username email photo'
+    }]).exec(function (err, task) {
         if (err) return next(err);
         res.json(task);
     });

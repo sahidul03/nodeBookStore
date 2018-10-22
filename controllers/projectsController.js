@@ -12,22 +12,37 @@ projectRouter.get('/projects', function(req, res, next) {
     });
 });
 
-/* GET only id and title of project BY ID */
+/* GET SINGLE project BY ID */
 projectRouter.get('/projects/:id', function(req, res, next) {
-    Project.findById(req.params.id).populate([{
+    Project.findById(req.params.id).populate([
+    {
         path: 'tasks',
-        populate: {
+        populate: [{
             path: 'creator',
             select: 'username email photo',
             model: 'User'
-        }
-    },'members', 'comments', 'creator']).exec(function (err, project) {
+        },
+        {
+            path: 'assignee',
+            select: 'username email photo',
+            model: 'User'
+        }],
+        select: 'creator assignee taskNumber title description updated_at'
+    },
+    {
+        path: 'members',
+        select: 'username email photo'
+    },
+    {
+        path: 'creator',
+        select: 'username email photo'
+    }]).exec(function (err, project) {
         if (err) return next(err);
         res.json(project);
     });
 });
 
-/* GET SINGLE project BY ID */
+/* GET only id and title of project BY ID */
 projectRouter.get('/min-projects/:id', function(req, res, next) {
     Project.findById(req.params.id, {title: 1}).exec(function (err, project) {
         if (err) return next(err);
