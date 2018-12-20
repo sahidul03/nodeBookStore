@@ -52,7 +52,7 @@ userRouter.get('/current_user', function (req, res, next) {
                 select: 'username email photo',
                 model: 'User'
             },
-            select: 'title shortName description updated_at members status conversation'
+            select: 'title shortName description updated_at members status conversation creator'
         }, {
             path: 'contacts',
             select: 'username email photo',
@@ -175,7 +175,7 @@ function _passwordRequired(errors, body, callback) {
 
 // POST route for Login
 userRouter.post('/login', function (req, res, next) {
-
+    
     if (req.body.username && req.body.password) {
         User.findOne({
                 $or: [
