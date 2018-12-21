@@ -191,7 +191,7 @@ userRouter.post('/login', function (req, res, next) {
                         if (response) {
                             // Passwords match
                             var token = jwt.sign({id: user._id}, config.secret, {
-                                expiresIn: config.tokenExpiredTime // expires in  an hour
+                                expiresIn: config.tokenExpiredTime
                             });
                             return res.json({flag: 1, auth: true, token: token});
                         } else {
