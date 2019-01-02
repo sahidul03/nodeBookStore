@@ -37,7 +37,12 @@ taskRouter.get('/tasks/:id', function (req, res, next) {
     },
     {
         path: 'project',
-        select: 'title shortName description'
+        populate: [{
+            path: 'members',
+            select: 'username email photo',
+            model: 'User'
+        }],
+        select: 'title shortName members'
     },
     {
         path: 'comments',
