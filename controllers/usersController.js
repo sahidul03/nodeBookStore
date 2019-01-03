@@ -38,7 +38,7 @@ userRouter.get('/current_user', function (req, res, next) {
     if (!token) return res.status(401).send({auth: false, message: 'No token provided.'});
 
     jwt.verify(token, config.secret, function (err, decoded) {
-        if (err) return res.status(500).send({auth: false, message: 'Failed to authenticate token.'});
+        if (err) return res.status(401).send({auth: false, message: 'Failed to authenticate token.'});
 
         User.findById(decoded.id, {
             password: 0,

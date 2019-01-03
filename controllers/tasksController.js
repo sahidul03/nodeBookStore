@@ -56,7 +56,7 @@ taskRouter.get('/tasks/:id', function (req, res, next) {
         path: 'creator',
         select: 'username email photo'
     }]).exec(function (err, task) {
-        if (err) return next(err);
+        if (err) return res.status(404).send({message: 'Page not found.'});
         res.json(task);
     });
 });

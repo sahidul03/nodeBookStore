@@ -37,7 +37,7 @@ projectRouter.get('/projects/:id', function(req, res, next) {
         path: 'creator',
         select: 'username email photo'
     }]).exec(function (err, project) {
-        if (err) return next(err);
+        if (err) return res.status(404).send({message: 'Page not found.'});
         res.json(project);
     });
 });
