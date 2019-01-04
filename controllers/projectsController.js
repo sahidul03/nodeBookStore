@@ -44,7 +44,7 @@ projectRouter.get('/projects/:id', function(req, res, next) {
 
 /* GET only id and title of project BY ID */
 projectRouter.get('/min-projects/:id', function(req, res, next) {
-    Project.findById(req.params.id, {title: 1}).exec(function (err, project) {
+    Project.findById(req.params.id, {title: 1, shortName: 1}).exec(function (err, project) {
         if (err) return next(err);
         res.json(project);
     });

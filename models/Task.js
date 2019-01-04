@@ -6,11 +6,24 @@ var TaskSchema = new mongoose.Schema({
     title: String,
     taskNumber: String,
     description: String,
-    status: {type: Number, default: 1},
+    type: {
+        type: String, 
+        enum: ['Bug', 'Task', 'Change Request', 'Story'], 
+        default: 'Task'
+    },
+    status: {
+        type: String, 
+        enum: ['Open', 'Reopen', 'Closed', 'In Progress', 'Resolved', 'In Review'], 
+        default: 'Open'
+    },
     duration: {type: Number, default: 0},
     spent_time: {type: Number, default: 0},
     start_date: Date,
     end_date: Date,
+    started_at: Date,
+    resolved_at: Date,
+    closed_at: Date,
+    reviewed_at: Date,
     parentTask: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Task'
@@ -28,6 +41,18 @@ var TaskSchema = new mongoose.Schema({
         ref: 'User'
     },
     creator: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    started_by: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    reviewed_by: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    closed_by: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },

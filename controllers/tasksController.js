@@ -63,7 +63,7 @@ taskRouter.get('/tasks/:id', function (req, res, next) {
 
 /* GET only id and title task BY ID */
 taskRouter.get('/min-tasks/:id', function (req, res, next) {
-    Task.findById(req.params.id, {title: 1}).exec(function (err, task) {
+    Task.findById(req.params.id, {title: 1, taskNumber: 1}).exec(function (err, task) {
         if (err) return res.json(null);
         res.json(task);
     });
@@ -137,6 +137,22 @@ taskRouter.post('/add-assignee', function(req, res, next) {
         }
     });
 
+});
+
+/* Change the status of task */
+taskRouter.post('/tasks/change-status', function(req, res, next) {
+    var status = req.body.status;
+    var task_id = req.body.task_id;
+    Task.findById(task_id, function (err, task) {
+        if (task) {
+            task.status = status;
+            task.save();
+            return res.json({status: task.status});
+        }
+        if(err){
+            return res.status(500).send("There was a problem of changing the task status.");
+        }
+    });
 });
 
 module.exports = taskRouter;
